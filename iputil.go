@@ -69,10 +69,9 @@ func IncrIP(ip *net.IP, offset uint32) *net.IP {
 }
 
 // IPMaskToString converts giver IPMask to dotted decimal format or returns nil for non-IPv4 masks
-func IPMaskToString(mask *net.IPMask) *string {
+func IPMaskToString(mask *net.IPMask) string {
 	if len(*mask) != 4 {
-		return nil
+		return "<nil>"
 	}
-	s := fmt.Sprintf("%d.%d.%d.%d", (*mask)[0], (*mask)[1], (*mask)[2], (*mask)[3])
-	return &s
+	return fmt.Sprintf("%d.%d.%d.%d", (*mask)[0], (*mask)[1], (*mask)[2], (*mask)[3])
 }

@@ -222,25 +222,15 @@ var maskTests = []struct {
 	{"127.0.0.1/32", "255.255.255.255"},
 	{"10.20.30.40/31", "255.255.255.254"},
 	{"100.64.0.0/10", "255.192.0.0"},
-	{"fe80::1/64", ""},
+	{"fe80::1/64", "<nil>"},
 }
 
 func TestIPMaskToString(t *testing.T) {
 	for _, tt := range maskTests {
 		_, in, _ := net.ParseCIDR(tt.in)
 		out := IPMaskToString(&in.Mask)
-		switch {
-		case out == nil:
-			if tt.out != "" {
-				t.Errorf("IPMaskToString(%v) = nil, want %s", in, tt.out)
-			}
-		case tt.out == "":
-			if out != nil {
-				t.Errorf("IPMaskToString(%v) = %s, want nil", in, *out)
-				continue
-			}
-		case tt.out != *out:
-			t.Errorf("IPMaskToString(%v) = %s, want %s", in, *out, tt.out)
+		if tt.out != out {
+			t.Errorf("IPMaskToString(%v) = %s, want %s", in, out, tt.out)
 		}
 	}
 }
