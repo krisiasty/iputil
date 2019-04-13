@@ -11,23 +11,23 @@ import (
 )
 
 // IPToUint32 converts IPv4 address from net.IP to uint32 format
-func IPToUint32(ip net.IP) uint32 {
-	if len(ip) == 16 {
-		ip = ip[12:16]
+func IPToUint32(ip *net.IP) uint32 {
+	if len(*ip) == 16 {
+		return binary.BigEndian.Uint32((*ip)[12:16])
 	}
-	return binary.BigEndian.Uint32(ip)
+	return binary.BigEndian.Uint32(*ip)
 }
 
 // Uint32ToIP converts IPv4 address from uint32 to net.IP format
-func Uint32ToIP(adr uint32) net.IP {
+func Uint32ToIP(adr uint32) *net.IP {
 	ip := make(net.IP, 4)
 	binary.BigEndian.PutUint32(ip, adr)
-	return ip
+	return &ip
 }
 
-// NumAdr returns number of IPv4 addresses in a given subnet
+// NumAdr returns number of IPv4 addresses in a given subnet or zero if not IPv4
 func NumAdr(subnet *net.IPNet) uint64 {
-	if !IsIPv4(&subnet.IP) {
+	if !IsIPv4Net(subnet) {
 		return 0
 	}
 	size, _ := subnet.Mask.Size()
@@ -36,7 +36,7 @@ func NumAdr(subnet *net.IPNet) uint64 {
 
 // FirstAdr returns first IP address from a given subnet in uint32 format
 func FirstAdr(subnet *net.IPNet) uint32 {
-	return IPToUint32(subnet.IP)
+	return IPToUint32(&subnet.IP)
 }
 
 // LastAdr returns first IP address from a given subnet in uint64 format
@@ -55,4 +55,14 @@ func Overlap(subnet1, subnet2 *net.IPNet) bool {
 // IsIPv4 checks whether given ip address is IPv4
 func IsIPv4(ip *net.IP) bool {
 	return ip.To4() != nil
+}
+
+// IsIPv4Net checks whether given ip network address is IPv4
+func IsIPv4Net(ipnet *net.IPNet) bool {
+	return ipnet.IP.To4() != nil
+}
+
+// IncrIP returns given IP address increased by given offset
+func IncrIP(ip *net.IP, offset uint32) *net.IP {
+	return Uint32ToIP(IPToUint32(ip) + offset)
 }

@@ -31,6 +31,22 @@ var convertTests = []struct {
 	{net.IPv4(127, 0, 0, 1), 2130706433},
 }
 
+func TestIPToUint32(t *testing.T) {
+	for _, tt := range convertTests {
+		if out := IPToUint32(&tt.in); out != tt.out {
+			t.Errorf("IPToUint32(%v) = %v, want %v", tt.in, out, tt.out)
+		}
+	}
+}
+
+func TestUint32ToIP(t *testing.T) {
+	for _, tt := range convertTests {
+		if out := Uint32ToIP(tt.out); !out.Equal(tt.in) {
+			t.Errorf("Uint32ToIP(%v) = %v, want %v", tt.out, out, tt.in)
+		}
+	}
+}
+
 var numAdrTests = []struct {
 	in  string
 	out uint64
@@ -78,6 +94,15 @@ var numAdrTests = []struct {
 	{"fe80::1/64", 0}, // non-IPv4
 }
 
+func TestNumAdr(t *testing.T) {
+	for _, tt := range numAdrTests {
+		_, net, _ := net.ParseCIDR(tt.in)
+		if out := NumAdr(net); out != tt.out {
+			t.Errorf("NumAddr(%q) = %v, want %v", net, out, tt.out)
+		}
+	}
+}
+
 var firstLastAdrTests = []struct {
 	in    string
 	first uint32
@@ -104,42 +129,6 @@ var firstLastAdrTests = []struct {
 	{"255.255.255.255/32", 4294967295, 4294967295},
 	{"127.0.0.1/32", 2130706433, 2130706433}}
 
-var overlapTests = []struct {
-	net1 string
-	net2 string
-	out  bool
-}{
-	{"192.168.0.0/20", "192.168.1.0/24", true},
-	{"192.168.0.0/24", "192.168.1.0/20", true},
-	{"192.168.0.0/16", "192.169.1.0/24", false},
-	{"10.0.0.0/7", "12.1.2.3/24", false},
-}
-
-func TestIPToUint32(t *testing.T) {
-	for _, tt := range convertTests {
-		if out := IPToUint32(tt.in); out != tt.out {
-			t.Errorf("IPToUint32(%v) = %v, want %v", tt.in, out, tt.out)
-		}
-	}
-}
-
-func TestUint32ToIP(t *testing.T) {
-	for _, tt := range convertTests {
-		if out := Uint32ToIP(tt.out); !out.Equal(tt.in) {
-			t.Errorf("Uint32ToIP(%v) = %v, want %v", tt.out, out, tt.in)
-		}
-	}
-}
-
-func TestNumAdr(t *testing.T) {
-	for _, tt := range numAdrTests {
-		_, net, _ := net.ParseCIDR(tt.in)
-		if out := NumAdr(net); out != tt.out {
-			t.Errorf("NumAddr(%q) = %v, want %v", net, out, tt.out)
-		}
-	}
-}
-
 func TestFirstAddr(t *testing.T) {
 	for _, tt := range firstLastAdrTests {
 		_, net, _ := net.ParseCIDR(tt.in)
@@ -156,6 +145,17 @@ func TestLastAddr(t *testing.T) {
 			t.Errorf("FirstAdr(%v) = %v, want %v", tt.in, out, tt.last)
 		}
 	}
+}
+
+var overlapTests = []struct {
+	net1 string
+	net2 string
+	out  bool
+}{
+	{"192.168.0.0/20", "192.168.1.0/24", true},
+	{"192.168.0.0/24", "192.168.1.0/20", true},
+	{"192.168.0.0/16", "192.169.1.0/24", false},
+	{"10.0.0.0/7", "12.1.2.3/24", false},
 }
 
 func TestOverlap(t *testing.T) {
@@ -176,5 +176,38 @@ func TestIsIPv4(t *testing.T) {
 	}
 	if out := IsIPv4(&ipv4); out != true {
 		t.Errorf("IsIPv4(%v) = %v, want %v", ipv4, out, true)
+	}
+}
+
+func TestIsIPv4Net(t *testing.T) {
+	_, ipv6net, _ := net.ParseCIDR("fe80::0/64")
+	_, ipv4net, _ := net.ParseCIDR("127.0.0.1/32")
+	if out := IsIPv4Net(ipv6net); out == true {
+		t.Errorf("IsIPv4Net(%v) = %v, want %v", ipv6net, out, false)
+	}
+	if out := IsIPv4Net(ipv4net); out != true {
+		t.Errorf("IsIPv4(%v) = %v, want %v", ipv4net, out, true)
+	}
+}
+
+var incrIPtests = []struct {
+	in     string
+	offset uint32
+	out    string
+}{
+	{"192.168.0.1", 10, "192.168.0.11"},
+	{"192.168.0.255", 1, "192.168.1.0"},
+	{"192.168.0.11", 256, "192.168.1.11"},
+	{"192.168.0.11", 67890, "192.169.9.61"},
+	{"127.0.0.1", 0, "127.0.0.1"},
+}
+
+func TestInctIp(t *testing.T) {
+	for _, tt := range incrIPtests {
+		in := net.ParseIP(tt.in)
+		newIP := IncrIP(&in, tt.offset)
+		if out := newIP.String(); out != tt.out {
+			t.Errorf("IncrIP(%v,%v) = %v, want %v", tt.in, tt.offset, out, tt.out)
+		}
 	}
 }
