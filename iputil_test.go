@@ -211,3 +211,36 @@ func TestInctIp(t *testing.T) {
 		}
 	}
 }
+
+var maskTests = []struct {
+	in  string
+	out string
+}{
+	{"192.168.0.0/24", "255.255.255.0"},
+	{"172.16.0.0/16", "255.255.0.0"},
+	{"10.0.0.0/8", "255.0.0.0"},
+	{"127.0.0.1/32", "255.255.255.255"},
+	{"10.20.30.40/31", "255.255.255.254"},
+	{"100.64.0.0/10", "255.192.0.0"},
+	{"fe80::1/64", ""},
+}
+
+func TestIPMaskToString(t *testing.T) {
+	for _, tt := range maskTests {
+		_, in, _ := net.ParseCIDR(tt.in)
+		out := IPMaskToString(&in.Mask)
+		switch {
+		case out == nil:
+			if tt.out != "" {
+				t.Errorf("IPMaskToString(%v) = nil, want %s", in, tt.out)
+			}
+		case tt.out == "":
+			if out != nil {
+				t.Errorf("IPMaskToString(%v) = %s, want nil", in, *out)
+				continue
+			}
+		case tt.out != *out:
+			t.Errorf("IPMaskToString(%v) = %s, want %s", in, *out, tt.out)
+		}
+	}
+}

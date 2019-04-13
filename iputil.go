@@ -7,6 +7,7 @@ package iputil
 
 import (
 	"encoding/binary"
+	"fmt"
 	"net"
 )
 
@@ -65,4 +66,13 @@ func IsIPv4Net(ipnet *net.IPNet) bool {
 // IncrIP returns given IP address increased by given offset
 func IncrIP(ip *net.IP, offset uint32) *net.IP {
 	return Uint32ToIP(IPToUint32(ip) + offset)
+}
+
+// IPMaskToString converts giver IPMask to dotted decimal format or returns nil for non-IPv4 masks
+func IPMaskToString(mask *net.IPMask) *string {
+	if len(*mask) != 4 {
+		return nil
+	}
+	s := fmt.Sprintf("%d.%d.%d.%d", (*mask)[0], (*mask)[1], (*mask)[2], (*mask)[3])
+	return &s
 }
